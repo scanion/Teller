@@ -15,32 +15,29 @@ VISA_TRANSACTION_REGEX = (r"^(?P<dates>(?:\w{3} \d{2} ){2})"
 
 TEMPLATES_DIRECTORY = 'tabula_templates'
 
-def get_start_year(pdf_file_name):
-    return int(re.search(r"(?<=-)\d{4}", pdf_file_name).group(0))
-
-
 def get_transactions(data_directory):
     result = set()
     for pdf_path in Path(data_directory).rglob('*.pdf'):
-        print(pdf_path.name)
-        year = get_start_year(pdf_path.name)
         if pdf_path.parts[-2] == 'visa':
-            result |= _parse_visa(pdf_path, year)
+            result |= _parse_visa(pdf_path)
         elif pdf_path.parts[-2] == 'chequing':
-            transactions = _parse_cheq_save(pdf_path, year, AccountType.CHEQUING)
+            transactions = _parse_cheq_save(pdf_path, AccountType.CHEQUING)
             result |= transactions
         elif pdf_path.parts[-2] == 'savings':
-            transactions = _parse_cheq_save(pdf_path, year, AccountType.SAVINGS)
+            transactions = _parse_cheq_save(pdf_path, AccountType.SAVINGS)
             result |= transactions 
     return result 
 
 
-def _parse_visa(pdf_path, year):
+def _parse_visa(pdf_path):
     result = set()
     text = ""
     with pdfplumber.open(pdf_path) as pdf:
         for page in pdf.pages:
             text += page.extract_text(x_tolerance=1)
+
+        year = _get_start_year(text, AccountType.VISA)
+
         opening_bal = _get_opening_bal(text, AccountType.VISA)
         closing_bal = _get_closing_bal(text, AccountType.VISA)
         last_month = None
@@ -72,8 +69,9 @@ def _parse_visa(pdf_path, year):
     return result
 
 
-def _parse_cheq_save(pdf_path, year, account_type):
+def _parse_cheq_save(pdf_path, account_type):
     result = set()
+    print(pdf_path)
     with pdfplumber.open(pdf_path) as pdf:
         template_path = f"{TEMPLATES_DIRECTORY}/{len(pdf.pages)}.json"
         text = ""
@@ -82,6 +80,9 @@ def _parse_cheq_save(pdf_path, year, account_type):
         opening_bal = _get_opening_bal(text, account_type)
         closing_bal = _get_closing_bal(text, account_type)
     dataframes = tabula.read_pdf_with_template(pdf_path, template_path)
+
+    year = _get_start_year(text, account_type)
+
     records = []
     for df in dataframes:
         records.extend(df.where(pd.notnull(df), None).to_dict('records'))
