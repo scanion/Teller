@@ -93,7 +93,7 @@ def _parse_cheq_save(pdf_path, account_type):
         if 'Date Description' in record:
             parts = record['Date Description'].split(' ')
             try:
-                if len(parts) > 2 and 0 <= int(parts[0]) <= 31:
+                if len(parts) > 2 and 0 <= int(parts[0]) <= 31 and len(parts[1]) == 3:
                     record['Date'] = ' '.join(parts[:2])
                     record['Description'] = ' '.join(parts[2:])
                 else:
