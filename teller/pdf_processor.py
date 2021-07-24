@@ -163,12 +163,12 @@ def _validate(opening_bal, closing_bal, transactions):
         raise AssertionError("Discrepancy found, bad parse :(")
 
 
+
 def _get_start_year(pdf_text, account_type):
     if account_type == AccountType.VISA:
         regex = r'STATEMENT FROM .+(?P<balance>-?\,.[0-9][0-9][0-9][0-9])'
     else:
         regex = r'Your opening balance.+(?P<balance>-?\,.[0-9][0-9][0-9][0-9])'
-
     match = re.search(regex, pdf_text)
 
     year = match.groupdict()['balance'].replace(', ', '').replace('$', '')
@@ -177,11 +177,8 @@ def _get_start_year(pdf_text, account_type):
 
 def _get_opening_bal(pdf_text, account_type):
     if account_type == AccountType.VISA:
-        
         regex = r'PREVIOUS (STATEMENT|ACCOUNT) BALANCE (?P<balance>-?\$[\d,]+\.\d{2})'
-            
     else:
-
         regex = r'Your opening balance.+(?P<balance>-?\$[\d,]+\.\d{2})'
     match = re.search(regex, pdf_text)
 
