@@ -88,7 +88,18 @@ def _parse_cheq_save(pdf_path, account_type):
         records.extend(df.where(pd.notnull(df), None).to_dict('records'))
     last_date = None
     add_seconds = 0
-    records = records[1:len(records)-1]  # skip Opening/Closing
+
+    closing_index = len(records)-1
+
+    for item in records:
+        for key, value in item.items():
+            if str(value).startswith('Closing'):
+                closing_index = records.index(item)
+                continue
+
+    
+    records = records[1:closing_index]  # skip Opening/Closing
+
     for record in records:
         if 'Date Description' in record:
             parts = record['Date Description'].split(' ')
